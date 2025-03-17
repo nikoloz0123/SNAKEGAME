@@ -1,0 +1,199 @@
+import pygame
+import random
+
+pygame.init()
+
+# Définir les couleurs
+white = (255, 255, 255)
+yellow = (255, 255, 102)  # Couleur de la nourriture
+black = (0, 0, 0)
+red = (213, 50, 80)
+green = (0, 255, 0)
+blue = (50, 153, 213)
+gray = (200, 200, 200)  # Couleur de la grille
+
+# Définir la largeur et la hauteur de l'écran
+width = 600
+height = 400
+
+# Créer l'écran
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption('Jeu de Serpent')
+
+# Définir les paramètres du jeu
+clock = pygame.time.Clock()
+snake_block = 10  # Taille du serpent (10x10 pixels)
+snake_speed = 12  # Vitesse du serpent
+
+font_style = pygame.font.SysFont("bahnschrift", 25)
+score_font = pygame.font.SysFont("comicsansms", 45)  # Taille de la police du score augmentée
+
+# Fonction pour afficher le score
+def Your_score(score):
+    value = score_font.render("Score : " + str(score), True, black)
+    screen.blit(value, [10, 10])  # Affichage du score en haut à gauche
+
+# Fonction pour dessiner le serpent avec des yeux à l'avant
+def our_snake(snake_block, snake_list, direction):
+    for index, x in enumerate(snake_list):
+        if index == 0:  # La tête du serpent
+            # Dessiner la tête du serpent
+            pygame.draw.rect(screen, green, [x[0], x[1], snake_block, snake_block])
+
+            # Dessiner les yeux (deux petits cercles)
+            eye_size = 3  # Taille des yeux
+            eye_offset = 2  # Décalage pour les yeux (en pixels)
+
+            # Placer les yeux toujours à l'avant de la tête
+            if direction == "right":
+                # Les yeux sont à droite de la tête (avant du serpent)
+                pygame.draw.circle(screen, black, [x[0] + snake_block - eye_offset, x[1] + eye_offset], eye_size)
+                pygame.draw.circle(screen, black, [x[0] + snake_block - eye_offset, x[1] + snake_block - eye_offset], eye_size)
+            elif direction == "left":
+                # Les yeux sont à gauche de la tête (avant du serpent)
+                pygame.draw.circle(screen, black, [x[0] + eye_offset, x[1] + eye_offset], eye_size)
+                pygame.draw.circle(screen, black, [x[0] + eye_offset, x[1] + snake_block - eye_offset], eye_size)
+            elif direction == "up":
+                # Les yeux sont en bas de la tête (avant du serpent)
+                pygame.draw.circle(screen, black, [x[0] + eye_offset, x[1] + eye_offset], eye_size)
+                pygame.draw.circle(screen, black, [x[0] + snake_block - eye_offset, x[1] + eye_offset], eye_size)
+            elif direction == "down":
+                # Les yeux sont en haut de la tête (avant du serpent)
+                pygame.draw.circle(screen, black, [x[0] + eye_offset, x[1] + snake_block - eye_offset], eye_size)
+                pygame.draw.circle(screen, black, [x[0] + snake_block - eye_offset, x[1] + snake_block - eye_offset], eye_size)
+        else:
+            # Corps du serpent
+            pygame.draw.rect(screen, green, [x[0], x[1], snake_block, snake_block])
+
+# Fonction pour afficher un message
+def message(msg, color, x, y):
+    mesg = font_style.render(msg, True, color)
+    screen.blit(mesg, [x, y])
+
+# Fonction pour dessiner la grille en gris
+def draw_grid():
+    for x in range(0, width, snake_block):
+        pygame.draw.line(screen, gray, (x, 0), (x, height))
+    for y in range(0, height, snake_block):
+        pygame.draw.line(screen, gray, (0, y), (width, y))
+
+# Fonction pour afficher un bouton
+def draw_button(text, x, y, width, height, color):
+    pygame.draw.rect(screen, color, [x, y, width, height])
+    button_text = font_style.render(text, True, white)
+    screen.blit(button_text, [x + 20, y + 10])
+
+# Boucle du jeu principal
+def gameLoop():
+    game_over = False
+    game_close = False
+
+    x1 = width // 2
+    y1 = height // 2
+
+    x1_change = 0
+    y1_change = 0
+    direction = "right"  # Direction initiale
+
+    snake_List = []
+    Length_of_snake = 1
+
+    foodx = round(random.randrange(0, width - snake_block) / snake_block) * snake_block
+    foody = round(random.randrange(0, height - snake_block) / snake_block) * snake_block
+
+    while not game_over:
+
+        while game_close:
+            screen.fill(blue)
+            message("VOUS AVEZ PERDU", red, width / 3, height / 3)
+            Your_score(Length_of_snake - 1)
+
+            # Dessin du bouton "Rejouer"
+            button_x = width / 3
+            button_y = height / 2
+            button_width = 200
+            button_height = 50
+            draw_button("Rejouer", button_x, button_y, button_width, button_height, green)
+
+            pygame.display.update()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game_over = True
+                    game_close = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_pos = pygame.mouse.get_pos()
+                    if button_x <= mouse_pos[0] <= button_x + button_width and button_y <= mouse_pos[1] <= button_y + button_height:
+                        gameLoop()  # Relancer le jeu
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_q:
+                        game_over = True
+                        game_close = False
+                    if event.key == pygame.K_r:
+                        gameLoop()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_over = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    x1_change = -snake_block
+                    y1_change = 0
+                    direction = "left"
+                elif event.key == pygame.K_RIGHT:
+                    x1_change = snake_block
+                    y1_change = 0
+                    direction = "right"
+                elif event.key == pygame.K_UP:
+                    y1_change = -snake_block
+                    x1_change = 0
+                    direction = "up"
+                elif event.key == pygame.K_DOWN:
+                    y1_change = snake_block
+                    x1_change = 0
+                    direction = "down"
+
+        # Vérification si le serpent touche les bords
+        if x1 >= width or x1 < 0 or y1 >= height or y1 < 0:
+            game_close = True
+
+        x1 += x1_change
+        y1 += y1_change
+
+        screen.fill(blue)
+
+        # Dessin de la grille en gris
+        draw_grid()
+
+        # Dessin de la nourriture
+        pygame.draw.rect(screen, yellow, [foodx, foody, snake_block, snake_block])
+
+        # Mise à jour de la position du serpent
+        snake_Head = [x1, y1]
+        snake_List.append(snake_Head)
+        if len(snake_List) > Length_of_snake:
+            del snake_List[0]
+
+        # Vérification de collision du serpent avec lui-même
+        for x in snake_List[:-1]:
+            if x == snake_Head:
+                game_close = True
+
+        our_snake(snake_block, snake_List, direction)
+        Your_score(Length_of_snake - 1)
+
+        pygame.display.update()
+
+        # Détection de la collision avec la nourriture
+        if x1 == foodx and y1 == foody:
+            foodx = round(random.randrange(0, width - snake_block) / snake_block) * snake_block
+            foody = round(random.randrange(0, height - snake_block) / snake_block) * snake_block
+            Length_of_snake += 1
+
+        clock.tick(snake_speed)
+
+    pygame.quit()
+    quit()
+
+# Démarrer le jeu
+gameLoop()
